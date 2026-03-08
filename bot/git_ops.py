@@ -1,3 +1,4 @@
+import os
 import subprocess
 import time
 
@@ -23,6 +24,12 @@ def commit_changes():
         return False
 
     run(["git", "commit", "-m", "update snapshots"])
-    run(["git", "push", "origin", "HEAD"])
+
+    token = os.environ["GITHUB_TOKEN"]
+    repo = os.environ["GITHUB_REPOSITORY"]
+
+    remote = f"https://x-access-token:{token}@github.com/{repo}.git"
+
+    run(["git", "push", remote, "HEAD"])
 
     return True

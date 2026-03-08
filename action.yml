@@ -2,6 +2,10 @@ name: "Snapshot Schema Bot"
 description: "Detects schema snapshot changes and opens a PR automatically"
 
 inputs:
+  github_token:
+    description: "GitHub token for pushing branch and creating PR"
+    required: true
+
   ci-path:
     description: "CI snapshot path"
     required: false
@@ -21,8 +25,7 @@ runs:
         python-version: "3.11"
 
     - shell: bash
-      run: |
-        pip install jsonschema-diff requests
+      run: pip install -r requirements.txt
 
     - shell: bash
       run: |
@@ -30,4 +33,4 @@ runs:
           --ci-path "${{ inputs.ci-path }}" \
           --base-path "${{ inputs.base-path }}"
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
