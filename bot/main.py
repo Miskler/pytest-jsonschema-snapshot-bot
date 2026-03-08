@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from diff import collect_changes
-from git_ops import create_branch, commit_changes
+from git_ops import checkout_branch, commit_push
 from pr import create_pr
 
 
@@ -23,9 +23,9 @@ def main():
         print("No snapshot changes")
         return
 
-    branch = create_branch()
+    branch = checkout_branch()
 
-    if commit_changes():
+    if commit_push():
         create_pr(branch, changes)
 
 
