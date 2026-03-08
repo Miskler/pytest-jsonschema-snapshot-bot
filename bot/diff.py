@@ -1,45 +1,24 @@
-import subprocess
-import shutil
+import jsonschema_diff
 from pathlib import Path
 
+def find_changes(ci_path: str, base_path: str):
+    """
+    Возвращает True, если есть изменения или новые файлы.
+    """
+    ci_path = Path(ci_path)
+    base_path = Path(base_path)
 
-def schema_changed(old, new):
+    changes_found = False
 
-    result = subprocess.run(
-        ["jsonschema-diff", "--exit-code", old, new],
-        capture_output=True,
-        text=True,
-    )
+    for ci_file in ci_path.rglob("*.json"):
+        base_file = base_path / ci_file.relative_to(ci_path)
+        if not base_file.exists():
+            changes_found = True
+            break
+        else:
+            diff = jsonschema_diff.diff(str(base_file), str(ci_file))
+            if diff:
+                changes_found = True
+                break
 
-    return result.returncode != 0
-
-
-def collect_changes(ci_dir: Path, base_dir: Path):
-
-    changes = []
-
-    if not ci_dir.exists():
-        return changes
-
-    for file in ci_dir.rglob("*"):
-
-        if not file.is_file():
-            continue
-
-        rel = file.relative_to(ci_dir)
-        target = base_dir / rel
-
-        target.parent.mkdir(parents=True, exist_ok=True)
-
-        if not target.exists():
-
-            shutil.copy2(file, target)
-            changes.append(("added", str(rel)))
-            continue
-
-        if schema_changed(str(target), str(file)):
-
-            shutil.copy2(file, target)
-            changes.append(("updated", str(rel)))
-
-    return changes
+    return changes_found
