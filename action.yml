@@ -22,10 +22,10 @@ runs:
   steps:
     - uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
+        python-version: "3.13"
 
     - shell: bash
-      run: pip install -r requirements.txt
+      run: pip install -r "${{ github.action_path }}/requirements.txt"
 
     - shell: bash
       run: |

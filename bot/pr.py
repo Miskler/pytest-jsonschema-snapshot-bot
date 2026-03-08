@@ -10,13 +10,13 @@ def create_pr(branch, changes):
     url = f"https://api.github.com/repos/{repo}/pulls"
 
     body = {
-        "title": "Update snapshots",
+        "title": "Update jsonschema snapshots",
         "head": branch,
         "base": "main",
         "body": "\n".join(f"{t}: {p}" for t, p in changes),
     }
 
-    requests.post(
+    r = requests.post(
         url,
         headers={
             "Authorization": f"Bearer {token}",
@@ -24,3 +24,5 @@ def create_pr(branch, changes):
         },
         json=body,
     )
+
+    r.raise_for_status()

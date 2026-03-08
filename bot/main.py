@@ -25,9 +25,8 @@ def main():
 
     branch = create_branch()
 
-    commit_changes()
-
-    create_pr(branch, changes)
+    if commit_changes():
+        create_pr(branch, changes)
 
 
 if __name__ == "__main__":
