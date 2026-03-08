@@ -1,0 +1,33 @@
+name: "Snapshot Schema Bot"
+description: "Detects schema snapshot changes and opens a PR automatically"
+
+inputs:
+  ci-path:
+    description: "CI snapshot path"
+    required: false
+    default: "tests/__snapshots__/ci.cd"
+
+  base-path:
+    description: "base snapshot path"
+    required: false
+    default: "tests/__snapshots__"
+
+runs:
+  using: "composite"
+
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - shell: bash
+      run: |
+        pip install jsonschema-diff requests
+
+    - shell: bash
+      run: |
+        python ${{ github.action_path }}/bot/main.py \
+          --ci-path "${{ inputs.ci-path }}" \
+          --base-path "${{ inputs.base-path }}"
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
