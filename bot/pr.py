@@ -7,7 +7,20 @@ def create_pr(branch, changes):
     repo = os.environ["GITHUB_REPOSITORY"]
     token = os.environ["GITHUB_TOKEN"]
 
-    url = f"https://api.github.com/repos/{repo}/pulls"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+    }
+
+    # проверить существующий PR
+    r = requests.get(
+        f"https://api.github.com/repos/{repo}/pulls",
+        headers=headers,
+        params={"head": f"{repo.split('/')[0]}:{branch}", "state": "open"},
+    )
+
+    if r.json():
+        return
 
     body = {
         "title": "Update jsonschema snapshots",
@@ -16,13 +29,8 @@ def create_pr(branch, changes):
         "body": "\n".join(f"{t}: {p}" for t, p in changes),
     }
 
-    r = requests.post(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-        },
+    requests.post(
+        f"https://api.github.com/repos/{repo}/pulls",
+        headers=headers,
         json=body,
-    )
-
-    r.raise_for_status()
+    ).raise_for_status()
