@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from diff import collect_changes
-from git_ops import create_branch, commit_push
+from git_ops import create_branch, commit_changes
 from pr import create_pr
 
 
@@ -25,7 +25,7 @@ def main():
 
     branch = create_branch()
 
-    commit_push()
+    commit_changes()
 
     create_pr(branch, changes)
 
