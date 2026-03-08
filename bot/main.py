@@ -281,7 +281,7 @@ def main():
         return
 
     try:
-        pushed = commit_push(branch, base_path)
+        pushed = commit_push(branch, base_path, ci_path)
     except Exception as e:
         print("Failed to commit/push changes:", e)
         raise
