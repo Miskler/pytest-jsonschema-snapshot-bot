@@ -177,13 +177,20 @@ def collect_changes(ci_dir: Path, base_dir: Path) -> List[Tuple[str, str]]:
     return changes
 
 
-def commit_push(branch: str, base_dir: Path) -> bool:
+def commit_push(branch: str, base_dir: Path, ci_dir: Path) -> bool:
     """
-    Stage base_dir, commit if needed, and force-push branch.
-    If GITHUB_TOKEN is present, uses token-authenticated remote URL for push.
-    Returns True if push performed (committed), False if nothing to commit.
+    Stage base_dir excluding ci_dir, commit if needed, and push branch.
     """
-    run(["git", "add", str(base_dir)])
+    # собираем все файлы base_dir, исключая ci_dir
+    files_to_add = [
+        str(p) for p in base_dir.rglob("*") 
+        if p.is_file() and not str(p).startswith(str(ci_dir))
+    ]
+    if not files_to_add:
+        print("[INFO] No files to add (excluding CI folder)")
+        return False
+
+    run(["git", "add"] + files_to_add)
 
     # check staged changes
     r = subprocess.run(["git", "diff", "--cached", "--quiet"])
@@ -197,12 +204,9 @@ def commit_push(branch: str, base_dir: Path) -> bool:
     token = os.environ.get("GITHUB_TOKEN")
 
     if token and repo:
-        # push via tokenized remote URL to ensure auth even if persist-credentials not set
         remote_url = f"https://x-access-token:{token}@github.com/{repo}.git"
-        # push HEAD to branch on remote
         run(["git", "push", "--force", remote_url, f"HEAD:refs/heads/{branch}"])
     else:
-        # assume origin is configured with push credentials
         run(["git", "push", "--force", "origin", branch])
 
     print(f"Pushed branch {branch}")
