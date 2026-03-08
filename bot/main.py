@@ -17,13 +17,13 @@ def main():
     ci = Path(args.ci_path)
     base = Path(args.base_path)
 
+    branch = checkout_branch()
+
     changes = collect_changes(ci, base)
 
     if not changes:
         print("No snapshot changes")
         return
-
-    branch = checkout_branch()
 
     if commit_push():
         create_pr(branch, changes)
