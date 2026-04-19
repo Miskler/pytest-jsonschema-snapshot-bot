@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-snapshot_bot_single.py
+bot/main.py
 
-Single-file snapshot bot that:
+Snapshot bot core that:
 - switches to a persistent branch (creates if missing) while preserving working snapshot files,
 - collects changes from CI snapshots (default: tests/__snapshots__/ci.cd) comparing with tests/__snapshots__
   using jsonschema-diff (falls back to bytewise compare),
@@ -75,11 +75,14 @@ def checkout_branch(branch: str, base_path: Path, ci_path: Path) -> str:
     """
     Ensure working tree is safe to checkout target branch:
     - save base_path and ci_path if they exist
-    - fetch remote branch
-    - checkout branch (create if missing)
+    - fetch the latest base branch
+    - checkout the snapshot branch from the fresh base branch tip
     - restore saved paths
     """
-    cwd = Path.cwd()
+    if os.environ.get("SNAPSHOT_ALREADY_CHECKED_OUT") == "1":
+        print(f"[INFO] Snapshot branch '{branch}' already checked out by workflow step.")
+        return branch
+
     paths_to_save = [base_path, ci_path]
     _, saved = _save_paths(paths_to_save)
 
@@ -88,23 +91,8 @@ def checkout_branch(branch: str, base_path: Path, ci_path: Path) -> str:
         run(["git", "config", "user.name", "github-actions[bot]"])
         run(["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"])
 
-        # try fetch (ignore failure)
-        subprocess.run(["git", "fetch", "origin", branch], check=False, text=True)
-
-        # check remote existence
-        r = subprocess.run(["git", "ls-remote", "--heads", "origin", branch], capture_output=True, text=True)
-        if r.stdout.strip():
-            # branch exists remotely
-            # try simple checkout; if fails, create local branch tracking remote
-            try:
-                run(["git", "checkout", branch])
-            except Exception:
-                run(["git", "checkout", "-b", branch, f"origin/{branch}"])
-            # ensure working copy matches remote
-            run(["git", "reset", "--hard", f"origin/{branch}"])
-        else:
-            # create new branch from current HEAD
-            run(["git", "checkout", "-b", branch])
+        run(["git", "fetch", "origin", BASE_BRANCH_DEFAULT])
+        run(["git", "checkout", "-B", branch, f"origin/{BASE_BRANCH_DEFAULT}"])
 
     except Exception:
         if saved:

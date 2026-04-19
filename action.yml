@@ -6,6 +6,11 @@ inputs:
     description: "GitHub token for pushing branch and creating PR"
     required: true
 
+  branch:
+    description: "Snapshot branch to checkout and update"
+    required: false
+    default: "snapshot-bot/update-snapshots"
+
   ci-path:
     description: "CI snapshot path"
     required: false
@@ -24,13 +29,23 @@ runs:
       with:
         python-version: "3.13"
 
+    - name: Checkout snapshot branch
+      shell: bash
+      run: |
+        python "${{ github.action_path }}/bot/checkout_branch.py" \
+          --branch "${{ inputs.branch }}" \
+          --ci-path "${{ inputs.ci-path }}" \
+          --base-path "${{ inputs.base-path }}"
+
     - shell: bash
       run: pip install -r "${{ github.action_path }}/requirements.txt"
 
     - shell: bash
       run: |
         python ${{ github.action_path }}/bot/main.py \
+          --branch "${{ inputs.branch }}" \
           --ci-path "${{ inputs.ci-path }}" \
           --base-path "${{ inputs.base-path }}"
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+        SNAPSHOT_ALREADY_CHECKED_OUT: "1"
